@@ -25,19 +25,6 @@ public class MainActivity extends AppCompatActivity {
     private EditText mSearchBoxET;
     private GitHubSearchAdapter mGitHubSearchAdapter;
 
-    private String[] dummySearchResults = {
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results"
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
                 String searchQuery = mSearchBoxET.getText().toString();
                 if (!TextUtils.isEmpty(searchQuery)) {
                     doGitHubSearch(searchQuery);
-                    mSearchBoxET.setText("");
                 }
             }
         });
