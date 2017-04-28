@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.example.android.githubsearch.utils.GitHubUtils;
 import com.example.android.githubsearch.utils.NetworkUtils;
@@ -23,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mSearchResultsRV;
     private EditText mSearchBoxET;
+    private ProgressBar mLoadingIndicatorPB;
+    private TextView mLoadingErrorMessageTV;
     private GitHubSearchAdapter mGitHubSearchAdapter;
 
     @Override
@@ -31,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mSearchBoxET = (EditText)findViewById(R.id.et_search_box);
+        mLoadingIndicatorPB = (ProgressBar)findViewById(R.id.pb_loading_indicator);
+        mLoadingErrorMessageTV = (TextView)findViewById(R.id.tv_loading_error_message);
         mSearchResultsRV = (RecyclerView)findViewById(R.id.rv_search_results);
 
         mSearchResultsRV.setLayoutManager(new LinearLayoutManager(this));
@@ -52,15 +58,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void doGitHubSearch(String searchQuery) {
-        URL githubSearchUrl = GitHubUtils.buildGitHubSearchURL(searchQuery);
-        Log.d("MainActivity", "got search url: " + githubSearchUrl.toString());
+        String githubSearchUrl = GitHubUtils.buildGitHubSearchURL(searchQuery);
+        Log.d("MainActivity", "got search url: " + githubSearchUrl);
         new GitHubSearchTask().execute(githubSearchUrl);
     }
 
-    public class GitHubSearchTask extends AsyncTask<URL, Void, String> {
+    public class GitHubSearchTask extends AsyncTask<String, Void, String> {
         @Override
-        protected String doInBackground(URL... params) {
-            URL githubSearchUrl = params[0];
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mLoadingIndicatorPB.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String githubSearchUrl = params[0];
             String searchResults = null;
             try {
                 searchResults = NetworkUtils.doHTTPGet(githubSearchUrl);
@@ -72,10 +84,15 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String s) {
+            mLoadingIndicatorPB.setVisibility(View.INVISIBLE);
             if (s != null) {
-                ArrayList<String> searchResultsList = new ArrayList<String>();
-                searchResultsList.add(s);
+                mLoadingErrorMessageTV.setVisibility(View.INVISIBLE);
+                mSearchResultsRV.setVisibility(View.VISIBLE);
+                ArrayList<GitHubUtils.SearchResult> searchResultsList = GitHubUtils.parseGitHubSearchResultsJSON(s);
                 mGitHubSearchAdapter.updateSearchResults(searchResultsList);
+            } else {
+                mSearchResultsRV.setVisibility(View.INVISIBLE);
+                mLoadingErrorMessageTV.setVisibility(View.VISIBLE);
             }
         }
     }
